@@ -1,0 +1,674 @@
+<title>Singular Hessians &amp; Phase Fields</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+
+<style>
+:root{
+  --ground:#F1F3F0; --surface:#FBFCFB; --surface-2:#E7EBE7;
+  --ink:#161E1C; --ink-2:#42514D; --ink-3:#6E7C78;
+  --line:#D4DAD6; --line-strong:#B4BFBA;
+  --accent:#14705F; --accent-soft:#D5E8E1; --accent-ink:#0B3F35;
+  --amber:#87590F; --amber-soft:#F3E9D4;
+  --neg:#9E413B; --pos:#2C577F;
+  --code-bg:#E9EDEA;
+  --shadow:0 1px 2px rgba(20,40,35,.05), 0 6px 18px -10px rgba(20,40,35,.18);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1412; --surface:#161E1B; --surface-2:#1F2A27;
+    --ink:#E3E9E6; --ink-2:#A9B6B2; --ink-3:#7C8A86;
+    --line:#28342F; --line-strong:#3C4B46;
+    --accent:#5CC0A8; --accent-soft:#123730; --accent-ink:#A4E2D2;
+    --amber:#D8A85A; --amber-soft:#2C2314;
+    --neg:#D9756D; --pos:#82AAD0;
+    --code-bg:#101816;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -12px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1412; --surface:#161E1B; --surface-2:#1F2A27;
+  --ink:#E3E9E6; --ink-2:#A9B6B2; --ink-3:#7C8A86;
+  --line:#28342F; --line-strong:#3C4B46;
+  --accent:#5CC0A8; --accent-soft:#123730; --accent-ink:#A4E2D2;
+  --amber:#D8A85A; --amber-soft:#2C2314;
+  --neg:#D9756D; --pos:#82AAD0;
+  --code-bg:#101816;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px -12px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Source Serif 4", Georgia, serif;
+  font-size:17px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{display:grid; grid-template-columns:230px minmax(0,1fr); gap:56px;
+      max-width:1180px; margin:0 auto; padding:0 24px; padding-block:0 96px}
+@media (max-width:980px){ .wrap{grid-template-columns:1fr; gap:0} }
+
+/* ---------------- nav ---------------- */
+nav{position:sticky; top:0; align-self:start; padding-block:40px 24px;
+    max-height:100vh; overflow-y:auto}
+@media (max-width:980px){ nav{position:static; max-height:none; padding-block:24px 0} }
+nav .navtitle{font-family:"JetBrains Mono",monospace; font-size:10.5px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin-bottom:14px}
+nav ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+@media (max-width:980px){ nav ol{flex-direction:row; flex-wrap:wrap; gap:6px} }
+nav a{display:block; text-decoration:none; color:var(--ink-2); font-size:14px;
+  line-height:1.35; padding:6px 10px; border-radius:5px; border-left:2px solid transparent}
+nav a:hover{color:var(--accent); background:var(--surface); border-left-color:var(--accent)}
+@media (max-width:980px){ nav a{border-left:none; background:var(--surface); border:1px solid var(--line)} }
+nav a:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* ---------------- header ---------------- */
+header{padding-block:56px 8px}
+.eyebrow{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 18px}
+h1{font-family:"Archivo",system-ui,sans-serif; font-weight:700; font-size:clamp(34px,5.2vw,54px);
+  line-height:1.03; letter-spacing:-.025em; margin:0 0 20px; text-wrap:balance; max-width:16ch}
+.standfirst{font-size:19px; color:var(--ink-2); max-width:62ch; margin:0}
+
+.brief{margin-top:32px; border:1px solid var(--line); border-left:3px solid var(--accent);
+  background:var(--surface); border-radius:0 8px 8px 0; padding:18px 22px; max-width:68ch}
+.brief .from{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.08em;
+  color:var(--ink-3); text-transform:uppercase; margin:0 0 8px}
+.brief p.q{margin:0; font-size:17.5px; font-style:italic}
+
+/* ---------------- type ---------------- */
+main{max-width:none}
+section{padding-block:44px 0; scroll-margin-top:24px}
+h2{font-family:"Archivo",system-ui,sans-serif; font-weight:700; font-size:29px;
+  letter-spacing:-.016em; line-height:1.15; margin:0 0 6px; text-wrap:balance}
+h2 .num{font-family:"JetBrains Mono",monospace; font-weight:500; font-size:14px;
+  color:var(--accent); display:block; letter-spacing:.1em; margin-bottom:8px}
+h3{font-family:"Archivo",system-ui,sans-serif; font-weight:600; font-size:19.5px;
+  letter-spacing:-.008em; margin:34px 0 8px; text-wrap:balance}
+h4{font-family:"JetBrains Mono",monospace; font-weight:700; font-size:12px;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin:26px 0 6px}
+p,ul,ol{max-width:68ch}
+p{margin:0 0 15px}
+ul,ol{margin:0 0 15px; padding-left:1.25em}
+li{margin-bottom:7px}
+li::marker{color:var(--accent)}
+strong{font-weight:600}
+em.term{font-style:normal; font-weight:600; color:var(--accent)}
+a{color:var(--accent)}
+hr.rule{border:none; border-top:1px solid var(--line); margin:44px 0 0; max-width:none}
+
+code, .m{font-family:"JetBrains Mono",monospace; font-size:.85em;
+  background:var(--code-bg); padding:1px 5px; border-radius:4px}
+.m{background:none; padding:0; font-size:.9em; color:var(--ink)}
+
+/* equation plate */
+.eq{background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  padding:15px 18px 11px; margin:0 0 16px; max-width:68ch; box-shadow:var(--shadow)}
+.eq .body{display:block; font-family:"JetBrains Mono",monospace; font-size:14px;
+  line-height:1.7; white-space:nowrap; overflow-x:auto; padding-bottom:2px}
+.eq .tag{display:block; text-align:right; margin-top:6px;
+  font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.08em;
+  color:var(--ink-3); text-transform:uppercase}
+
+/* callout */
+.note{border:1px solid var(--line); background:var(--surface); border-radius:8px;
+  padding:16px 18px; margin:0 0 18px; max-width:68ch}
+.note.warn{border-color:var(--amber); background:var(--amber-soft)}
+.note .lbl{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-3); margin:0 0 6px}
+.note.warn .lbl{color:var(--amber)}
+.note p:last-child{margin-bottom:0}
+
+/* tables */
+.tblwrap{overflow-x:auto; margin:0 0 20px; max-width:100%}
+table{border-collapse:collapse; font-size:14.5px; width:100%; min-width:520px}
+th,td{text-align:left; padding:9px 14px 9px 0; border-bottom:1px solid var(--line);
+  vertical-align:top}
+th{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3); font-weight:500; border-bottom-color:var(--line-strong)}
+td.num{font-variant-numeric:tabular-nums}
+td code{font-size:12.5px}
+
+/* paper cards on a timeline rail */
+.rail{border-left:2px solid var(--line); padding-left:26px; margin:24px 0 8px;
+  display:flex; flex-direction:column; gap:18px; max-width:72ch}
+.paper{position:relative; background:var(--surface); border:1px solid var(--line);
+  border-radius:8px; padding:18px 20px; box-shadow:var(--shadow)}
+.paper::before{content:""; position:absolute; left:-33px; top:24px; width:10px; height:10px;
+  border-radius:50%; background:var(--accent); border:2px solid var(--ground)}
+.paper .yr{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.1em;
+  color:var(--accent); display:block; margin-bottom:4px}
+.paper h3{margin:0 0 6px; font-size:18px}
+.paper p{margin:0; font-size:15.5px; color:var(--ink-2); max-width:none}
+
+/* figures */
+figure{margin:26px 0 30px; max-width:860px}
+figure svg{display:block; width:100%; max-width:100%; height:auto;
+  background:var(--surface); border:1px solid var(--line); border-radius:8px}
+figcaption{font-size:13.5px; color:var(--ink-3); margin-top:10px; max-width:66ch;
+  line-height:1.5}
+
+/* day plan */
+.days{display:grid; gap:14px; margin:22px 0 10px; max-width:72ch}
+.day{background:var(--surface); border:1px solid var(--line); border-radius:8px; overflow:hidden}
+.day > .hd{display:flex; align-items:baseline; gap:12px; padding:13px 18px;
+  background:var(--surface-2); border-bottom:1px solid var(--line)}
+.day .d{font-family:"JetBrains Mono",monospace; font-weight:700; font-size:11px;
+  letter-spacing:.12em; color:var(--accent)}
+.day .t{font-family:"Archivo",sans-serif; font-weight:600; font-size:16px}
+.day .hrs{margin-left:auto; font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--ink-3)}
+.day ol{margin:0; padding:14px 18px 16px 34px; max-width:none}
+.day li{font-size:15.5px; margin-bottom:8px}
+.day li:last-child{margin-bottom:0}
+.day li .hint{display:block; color:var(--ink-3); font-size:13.5px; line-height:1.45}
+
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px;
+  padding:14px 16px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:12.5px; line-height:1.62; margin:0 0 18px; max-width:68ch}
+pre code{background:none; padding:0; font-size:inherit}
+
+.draft{background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  padding:20px 22px; max-width:68ch; font-size:15.5px}
+.draft .hdr{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--ink-3);
+  border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:14px; letter-spacing:.05em}
+.draft p{max-width:none}
+
+@media (prefers-reduced-motion:no-preference){ a{transition:color .15s, background .15s} }
+</style>
+
+<div class="wrap">
+<nav>
+  <p class="navtitle">Contents</p>
+  <ol>
+    <li><a href="#brief">The brief</a></li>
+    <li><a href="#ground">0 · Ground floor</a></li>
+    <li><a href="#nsh">1 · NSH</a></li>
+    <li><a href="#deudf">2 · DEUDF</a></li>
+    <li><a href="#mpf">3 · MPF</a></li>
+    <li><a href="#build">4 · What to build</a></li>
+    <li><a href="#plan">5 · Three days</a></li>
+    <li><a href="#traps">6 · Traps</a></li>
+    <li><a href="#reply">7 · The reply</a></li>
+  </ol>
+</nav>
+
+<main>
+<header id="brief">
+  <p class="eyebrow">URECA · 3D deep learning · Prof. Ying He</p>
+  <h1>Singular Hessians &amp; Phase Fields</h1>
+  <p class="standfirst">Three papers on reconstructing surfaces from unoriented point clouds, explained from the ground up — and a three-day plan to reimplement all three and come back with pictures.</p>
+
+  <div class="brief">
+    <p class="from">He Ying (Dr) — 31 Aug 2026</p>
+    <p class="q">“Have you tried to re-implement any of these algorithms? If so, show me some reconstruction results based on your own implementations.”</p>
+  </div>
+
+  <p style="margin-top:26px">Read that request carefully. He is not asking for a literature review, and he is not asking for state-of-the-art numbers. He is asking whether you can turn equations into working code and produce an image of a surface. The deliverable is <strong>reconstructions you made</strong>, plus honest words about what worked and what did not. Three rough results with a clear account of their limitations beats one polished result you cannot explain.</p>
+</header>
+
+<hr class="rule">
+
+<section id="ground">
+  <h2><span class="num">Part 0</span>Ground floor: what all three papers assume you already know</h2>
+
+  <p>Skip nothing here. Every disagreement between the three papers lives in this section.</p>
+
+  <h3>A surface as the zero set of a function</h3>
+  <p>A mesh stores a surface explicitly: a list of vertices and triangles. An <em class="term">implicit representation</em> stores it as the solution set of an equation. Pick a function <span class="m">f : ℝ³ → ℝ</span>. The surface is every point where it equals zero:</p>
+  <div class="eq"><span class="body">𝒮 = { x ∈ ℝ³ : f(x) = 0 }</span><span class="tag">level set</span></div>
+  <p>A sphere of radius <span class="m">r</span> is <span class="m">f(x) = ‖x‖ − r</span>. The appeal: <span class="m">f</span> is continuous, so the surface has infinite resolution; it is differentiable, so you get normals and curvature for free; and a neural network is a natural way to store an arbitrary <span class="m">f</span>. That last point is the whole field — <em class="term">neural implicit representation</em> means “the function <span class="m">f</span> is an MLP, and we fit its weights to one point cloud.”</p>
+
+  <h4>Two flavours of f</h4>
+  <ul>
+    <li><strong>SDF</strong> — signed distance function. <span class="m">|f(x)|</span> is the distance to the surface, and the sign says inside (negative) or outside (positive). Requires a coherent notion of “inside”.</li>
+    <li><strong>UDF</strong> — unsigned distance function. Just the distance, always <span class="m">≥ 0</span>. No inside needed.</li>
+  </ul>
+  <p>Paper 1 (NSH) learns an SDF. Paper 2 (DEUDF) learns a UDF. Paper 3 (MPF) argues you should learn <em>both, separately</em>, and combine them. That is the entire arc.</p>
+
+  <h3>Getting a mesh back out: marching cubes</h3>
+  <p>To look at your result you need triangles. Evaluate <span class="m">f</span> on a regular grid — say 192³ — and for every little cube, check whether <span class="m">f</span> changes sign across its edges. Where it does, the surface passes through; a lookup table says which triangles to emit. That is <em class="term">marching cubes</em>.</p>
+  <p>Notice the dependency: <strong>marching cubes needs a sign change.</strong> A UDF touches zero and bounces back up without ever going negative, so marching cubes at level 0 finds nothing at all. This single fact is responsible for a large fraction of paper 2 and paper 3.</p>
+
+  <h3>The Eikonal equation</h3>
+  <p>If <span class="m">f</span> really is a distance function, then moving one unit in the direction of steepest ascent increases the distance by exactly one unit. In symbols:</p>
+  <div class="eq"><span class="body">‖∇f(x)‖₂ = 1</span><span class="tag">eikonal</span></div>
+  <p>This is the workhorse regulariser of the whole field. You cannot supervise <span class="m">f</span> away from the point cloud — you have no ground-truth distances — but you can insist that <span class="m">f</span> behaves like a distance function everywhere. Add “<span class="m">f(p) = 0</span> at the input points” and you have IGR/SIREN-style fitting. All three papers start here and then argue about what else is needed.</p>
+
+  <h3>Why “unoriented” is the hard word in the title</h3>
+  <p>A point cloud is just positions. If each point also carried a correctly-oriented normal — a unit vector pointing consistently outward — reconstruction would be comparatively easy; that is what Poisson reconstruction consumes. Real scanners do not give you that. You can estimate a normal <em>direction</em> at each point by local PCA (fit a plane to the 16 nearest neighbours; the smallest-eigenvalue eigenvector is the normal), but its <em>sign</em> is arbitrary, and making the signs globally consistent is itself a hard combinatorial problem.</p>
+  <p>So: <strong>any loss you write must be invariant to flipping a normal.</strong> Watch for this. DEUDF gets it by sampling symmetric point pairs; MPF gets it by putting an absolute value around an inner product. If you ever find yourself using ground-truth oriented normals as supervision, you have quietly changed the problem into an easier one.</p>
+
+  <h3>SIREN, and why the activation function matters</h3>
+  <p>All three papers use the same backbone: an MLP with <span class="m">sin(ω₀ · Wx + b)</span> activations instead of ReLU. Two reasons, both load-bearing:</p>
+  <ul>
+    <li><strong>ReLU has zero second derivative almost everywhere.</strong> Paper 1 is built entirely on the Hessian of <span class="m">f</span>. With a ReLU network that Hessian is identically zero — the method could not exist.</li>
+    <li><strong>ReLU networks are spectrally biased</strong> toward low frequencies, so they smooth away exactly the fine geometric detail all three papers are chasing.</li>
+  </ul>
+  <p><span class="m">ω₀</span> controls the frequency band: 30 is standard, DEUDF uses 60 on clean clouds and drops to 30 on noisy ones (high frequency fits noise). SIREN also needs its own weight initialisation — uniform in <span class="m">±√(6/n)/ω₀</span> — without which it simply does not train.</p>
+
+  <h3>How you will be graded</h3>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Metric</th><th>Direction</th><th>What it actually measures</th></tr></thead>
+    <tbody>
+      <tr><td>Chamfer&nbsp;L1 (×10³)</td><td>lower</td><td>Sample 100K points from your mesh and from the ground truth; average nearest-neighbour distance in both directions. Fitting tightness.</td></tr>
+      <tr><td>F-score @ 0.005</td><td>higher</td><td>Harmonic mean of precision (your points near the GT) and recall (GT points near yours). Catches missing parts that Chamfer averages away.</td></tr>
+      <tr><td>Normal consistency</td><td>higher</td><td>Agreement of surface orientation. Detects the mesh that is in the right place but crumpled.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Protocol from NSH §5.2, which the others follow: normalise both meshes to <span class="m">[−0.5, 0.5]³</span> before measuring, or the numbers mean nothing.</p>
+</section>
+
+<hr class="rule">
+
+<section id="nsh">
+  <h2><span class="num">Paper 1 · TOG 2023</span>NSH — regularise the SDF with a singular Hessian</h2>
+
+  <p><strong>Neural-Singular-Hessian: Implicit Neural Representation of Unoriented Point Clouds by Enforcing Singular Hessian.</strong> Wang, Zhang, Xu, Zhang, Wang, Chen, Xin, Wang, Tu.</p>
+
+  <h3>The problem it attacks</h3>
+  <p>“<span class="m">f = 0</span> on the points” plus “<span class="m">‖∇f‖ = 1</span>” does not pin down a unique <span class="m">f</span>. Infinitely many wiggly functions satisfy both, and what you get in practice is <em class="term">ghost geometry</em>: blobs and sheets floating in empty space, extra bumps where the point cloud was sparse.</p>
+  <p>The standard fix was to add a smoothness penalty — Laplacian energy (DiGS) or Hessian energy <span class="m">‖H‖²</span>. It works, and it also destroys detail, because smoothness is indifferent to whether the wiggle it is flattening is noise or a real crease. Look at NSH's Fig. 2: DiGS produces a clean but soft dragon. NSH wants the creases back.</p>
+
+  <h3>The idea</h3>
+  <p>Rather than penalise variation, enforce a property that the <em>true</em> SDF provably has. Here is the geometry. Take a point <span class="m">x</span> close to the surface and let <span class="m">x′</span> be its closest surface point. The Hessian of the true SDF at <span class="m">x</span> has three eigenvectors:</p>
+  <ul>
+    <li>two align with the <strong>principal curvature directions</strong> of the surface at <span class="m">x′</span>, with eigenvalues related to the curvatures;</li>
+    <li>one aligns with the <strong>surface normal</strong> at <span class="m">x′</span> — and its eigenvalue is <strong>exactly zero</strong>.</li>
+  </ul>
+  <p>Why zero? Along the normal direction the SDF changes perfectly linearly (walk one unit away, distance goes up by one), and the second derivative of a linear function is zero. A symmetric matrix with a zero eigenvalue is singular, so its determinant vanishes:</p>
+  <div class="eq"><span class="body">det( H<sub>SDF</sub>(x) ) = 0&nbsp;&nbsp; for all x near the surface</span><span class="tag">the whole paper</span></div>
+
+  <figure>
+    <svg viewBox="0 0 760 300" role="img" aria-label="Near a surface, the Hessian of the true signed distance function has one eigenvector along the normal with eigenvalue zero, which makes its determinant zero.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <!-- thin shell band -->
+      <path d="M 50 190 C 150 122, 280 242, 410 168" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.35"/>
+      <path d="M 50 250 C 150 182, 280 302, 410 228" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.35"/>
+      <text x="332" y="262" font-family="JetBrains Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.5">thin shell Ω</text>
+
+      <!-- surface curve -->
+      <path d="M 50 220 C 150 152, 280 272, 410 198" fill="none" stroke="currentColor" stroke-width="2.5" opacity="0.85"/>
+      <text x="50" y="180" font-family="JetBrains Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">surface 𝒮</text>
+
+      <!-- x' on surface, x offset along the normal -->
+      <circle cx="240" cy="208" r="4.5" fill="currentColor"/>
+      <text x="232" y="230" font-family="JetBrains Mono, monospace" font-size="12" fill="currentColor">x′</text>
+      <line x1="240" y1="208" x2="254" y2="170" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+      <circle cx="254" cy="170" r="5" fill="var(--accent)"/>
+      <text x="236" y="164" font-family="JetBrains Mono, monospace" font-size="12" fill="var(--accent)">x</text>
+
+      <!-- eigenvectors at x -->
+      <line x1="254" y1="170" x2="278" y2="104" stroke="var(--accent)" stroke-width="2" marker-end="url(#ahA)"/>
+      <text x="286" y="98" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--accent)">normal · λ = 0</text>
+      <line x1="254" y1="170" x2="176" y2="146" stroke="currentColor" stroke-width="1.6" marker-end="url(#ah)" opacity="0.8"/>
+      <text x="54" y="140" font-family="JetBrains Mono, monospace" font-size="11" fill="currentColor" opacity="0.8">curvature e₁ · λ₁</text>
+      <circle cx="254" cy="170" r="9" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.45"/>
+      <circle cx="254" cy="170" r="2" fill="currentColor" opacity="0.45"/>
+      <text x="118" y="286" font-family="JetBrains Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">curvature e₂ · λ₂ — out of page</text>
+      <line x1="248" y1="280" x2="256" y2="182" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3" opacity="0.4"/>
+
+      <!-- matrix -->
+      <rect x="540" y="76" width="196" height="150" rx="8" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+      <text x="562" y="106" font-family="JetBrains Mono, monospace" font-size="12" fill="currentColor" opacity="0.7">H in eigenbasis</text>
+      <text x="562" y="138" font-family="JetBrains Mono, monospace" font-size="13" fill="currentColor">⎡ λ₁  0   0 ⎤</text>
+      <text x="562" y="160" font-family="JetBrains Mono, monospace" font-size="13" fill="currentColor">⎢ 0   λ₂  0 ⎥</text>
+      <text x="562" y="182" font-family="JetBrains Mono, monospace" font-size="13" fill="var(--accent)">⎣ 0   0   0 ⎦</text>
+      <text x="562" y="210" font-family="JetBrains Mono, monospace" font-size="12.5" fill="var(--accent)">⇒ det H = 0</text>
+    </svg>
+    <figcaption>The geometric fact NSH turns into a loss. In the thin shell around a smooth surface, one Hessian eigenvector of the true SDF points along the normal and its eigenvalue is zero, because the distance varies linearly in that direction. A zero eigenvalue forces the determinant to zero — so <span class="m">|det H|</span> measures how far the learned field is from being a genuine SDF.</figcaption>
+  </figure>
+
+  <h3>Why a determinant and not a norm</h3>
+  <p>This is the point to have ready when he asks. Hessian <em>energy</em> is <span class="m">‖H‖²</span>; driving it to zero forces all nine entries to zero, which makes <span class="m">f</span> an affine function — perfectly smooth and geometrically useless. Driving <span class="m">det(H)</span> to zero removes <strong>one</strong> degree of freedom: it says the three eigenvalues cannot all be nonzero, and says nothing about how large the other two may be. So curvature survives; only the component that a real SDF would not have is suppressed. It is a constraint of the right shape, not a blunt smoothing.</p>
+  <p>The second reading is topological. Morse theory relates the count of critical points of a function on a region to that region's Euler characteristic. Ghost geometry <em>is</em> surplus critical points. Pushing <span class="m">det(H) → 0</span> annihilates critical points in pairs until only the minimum number the topology demands remains — so it removes the spurious ones and cannot remove the necessary ones.</p>
+
+  <h3>Relaxing the Eikonal constraint</h3>
+  <p>Second contribution, easy to miss. Instead of <span class="m">‖∇f‖ = 1</span> everywhere, NSH asks only that the gradient does not <em>vanish</em>, and only at the input points:</p>
+  <div class="eq"><span class="body">L<sub>eik</sub><sup>relax</sup> = mean ReLU( −( ‖∇f(p)‖₂ − σ<sub>min</sub> ) ),&nbsp; σ<sub>min</sub> = 0.8</span><span class="tag">Eq. 12</span></div>
+  <p>A one-sided hinge: zero cost once the gradient is long enough. The reasoning is that for surface extraction you do not need a metrically exact distance field, you need a field whose zero crossing is well-conditioned. Relaxing frees up capacity for the other terms. Their Table 6 sweeps <span class="m">σ<sub>min</sub></span> ∈ {0.6, 0.8, 1.0} and 0.8 wins.</p>
+
+  <h3>The full loss</h3>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Term</th><th>Formula</th><th>Evaluated on</th><th>Weight</th></tr></thead>
+    <tbody>
+      <tr><td>manifold</td><td><code>mean |f(p)|</code></td><td>input points 𝒫</td><td class="num">7000</td></tr>
+      <tr><td>non-manifold</td><td><code>mean exp(−100|f(x)|)</code></td><td>Q<sub>far</sub>, uniform in bbox</td><td class="num">600</td></tr>
+      <tr><td>relaxed eikonal</td><td><code>mean ReLU(σ−‖∇f‖)</code></td><td>input points 𝒫</td><td class="num">50</td></tr>
+      <tr><td>singular Hessian</td><td><code>mean |det H(x)|</code></td><td>Q<sub>near</sub>, near-surface</td><td class="num">τ (annealed)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>The <strong>point sets differ per term and that is not incidental</strong>. <span class="m">det H = 0</span> is a statement about the thin shell; it is false in the middle of empty space, so enforcing it there fights the other terms. Getting these sets wrong is the most common way a reimplementation of this paper looks bad.</p>
+
+  <h3>The annealing schedule is the method</h3>
+  <p><span class="m">τ</span> holds at 1 for the first 20% of iterations, falls to 3·10⁻⁴ by 40%, and to 3·10⁻⁵ at the end. Early on the Hessian term dominates and the network snaps to a crude blob with the right topology; then it fades and the data terms carve in the detail. That is the “coarse-to-fine” in their abstract, and it is three lines of code. Fix <span class="m">τ</span> to a constant and you get either a smooth potato or ghosts, depending on the constant — which is a good ablation to run and report.</p>
+
+  <h4>Their settings</h4>
+  <p>SIREN, 4 hidden layers × 256 units, <span class="m">ω₀ = 30</span>. Adam, lr 5·10⁻⁵, 10K iterations, batch 15K query points. <span class="m">Q<sub>near</sub></span> is one Gaussian sample per input point with <span class="m">σ</span> = distance to that point's 50th nearest neighbour, so the sampling band automatically widens where the cloud is sparse.</p>
+</section>
+
+<hr class="rule">
+
+<section id="deudf">
+  <h2><span class="num">Paper 2 · AAAI 2025</span>DEUDF — three fixes for unsigned distance fields</h2>
+
+  <p><strong>Details Enhancement in Unsigned Distance Field Learning for High-fidelity 3D Surface Reconstruction.</strong> Xu, Hou, Wang, Qin, Zhang, He.</p>
+
+  <h3>Why abandon the sign at all</h3>
+  <p>An SDF cannot represent a surface that has no inside: a garment, a leaf, a sheet-metal panel, a scanned room with open walls. Force a signed field onto one and it seals the opening or inflates the sheet into a thin solid. A UDF has no such constraint — but UDFs reconstruct visibly worse than SDFs, and this paper is a careful diagnosis of why. Three causes, three fixes.</p>
+
+  <h3>Fix 1 — stop enforcing non-negativity with the output layer</h3>
+  <p>A distance must be <span class="m">≥ 0</span>, so everyone clamps the network output. Both standard ways are damaging:</p>
+  <ul>
+    <li><strong><span class="m">|·|</span></strong> folds the function. Where the underlying field crosses zero, the fold creates a <strong>W shape</strong> — multiple local minima near the surface — so “where is the surface” becomes ambiguous, and the gradient direction flips erratically.</li>
+    <li><strong>softplus</strong> is almost flat for negative inputs, so the gradient <strong>vanishes across a wide band</strong> around the surface. Training stalls exactly where you need precision, and the reconstruction comes out over-smoothed.</li>
+  </ul>
+  <p>DEUDF's answer: use a plain unconditioned MLP — no <span class="m">|·|</span>, no softplus — and let the field dip slightly negative near the surface. It is no longer a UDF in the strict sense; the surface is defined as the <em>local minimum of |f|</em> rather than an exact zero set. Non-negativity becomes a soft penalty instead:</p>
+  <div class="eq"><span class="body">L<sub>positive</sub> = mean exp( −100 · f(x) )</span><span class="tag">Eq. 2 — no abs()</span></div>
+  <div class="note warn">
+    <p class="lbl">Read the sign twice</p>
+    <p>There is deliberately no absolute value. <span class="m">exp(−100f)</span> explodes for negative <span class="m">f</span> and is negligible for positive <span class="m">f</span> — a one-sided “please stay positive”. Compare NeuralUDF's <span class="m">exp(−100|f|)</span>, which punishes near-zero values from both sides and therefore erases small components. The paper spends an entire Remark on this one missing pair of bars. Expect to be asked about it.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 720 220" role="img" aria-label="Profile of the learned field along a line crossing the surface, for four output-layer choices: ideal V shape, absolute value giving a W, softplus giving a flat U, and an unconditioned MLP recovering a narrow V.">
+      <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="currentColor">
+        <!-- four panels -->
+        <g transform="translate(20,18)">
+          <rect x="0" y="0" width="150" height="130" rx="4" fill="none" stroke="currentColor" opacity="0.2"/>
+          <line x1="10" y1="110" x2="140" y2="110" stroke="currentColor" opacity="0.35"/>
+          <line x1="75" y1="14" x2="75" y2="116" stroke="currentColor" opacity="0.2" stroke-dasharray="3 3"/>
+          <polyline points="10,22 75,110 140,22" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+          <text x="0" y="150" opacity="0.75">ideal — sharp V</text>
+        </g>
+        <g transform="translate(190,18)">
+          <rect x="0" y="0" width="150" height="130" rx="4" fill="none" stroke="currentColor" opacity="0.2"/>
+          <line x1="10" y1="110" x2="140" y2="110" stroke="currentColor" opacity="0.35"/>
+          <line x1="75" y1="14" x2="75" y2="116" stroke="currentColor" opacity="0.2" stroke-dasharray="3 3"/>
+          <polyline points="10,26 44,110 60,74 75,96 90,74 106,110 140,26" fill="none" stroke="var(--neg)" stroke-width="2.2"/>
+          <text x="0" y="150" opacity="0.75">MLP + abs — W, many minima</text>
+        </g>
+        <g transform="translate(360,18)">
+          <rect x="0" y="0" width="150" height="130" rx="4" fill="none" stroke="currentColor" opacity="0.2"/>
+          <line x1="10" y1="110" x2="140" y2="110" stroke="currentColor" opacity="0.35"/>
+          <line x1="75" y1="14" x2="75" y2="116" stroke="currentColor" opacity="0.2" stroke-dasharray="3 3"/>
+          <path d="M 10 24 C 40 66, 46 104, 62 108 L 88 108 C 104 104, 110 66, 140 24" fill="none" stroke="var(--neg)" stroke-width="2.2"/>
+          <text x="0" y="150" opacity="0.75">MLP + softplus — flat U</text>
+        </g>
+        <g transform="translate(530,18)">
+          <rect x="0" y="0" width="170" height="130" rx="4" fill="none" stroke="currentColor" opacity="0.2"/>
+          <line x1="10" y1="110" x2="160" y2="110" stroke="currentColor" opacity="0.35"/>
+          <line x1="85" y1="14" x2="85" y2="116" stroke="currentColor" opacity="0.2" stroke-dasharray="3 3"/>
+          <polyline points="10,22 85,114 160,22" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+          <text x="0" y="150" opacity="0.75">unconditioned MLP — V, dips below 0</text>
+        </g>
+      </g>
+      <text x="20" y="212" font-family="JetBrains Mono, monospace" font-size="10" fill="currentColor" opacity="0.5">horizontal: signed distance along a probe through the surface&nbsp;&nbsp;·&nbsp;&nbsp;vertical: learned field value&nbsp;&nbsp;·&nbsp;&nbsp;dotted line: the true surface</text>
+    </svg>
+    <figcaption>The three output layers, seen as the shape of the learned field along a line crossing the surface. Only the last one gives a single, sharply located minimum — the gradient stays informative right up to the surface, so optimisation does not stall and the zero crossing is unambiguous.</figcaption>
+  </figure>
+
+  <h3>Fix 2 — use normal directions, via straddling pairs</h3>
+  <p>A UDF's gradient vanishes <em>at</em> the surface, so you cannot constrain it there. DEUDF constrains it just off the surface instead. For each input point <span class="m">p</span> with PCA normal <span class="m">n</span>, sample a pair</p>
+  <div class="eq"><span class="body">q¹ = p + λn,&nbsp;&nbsp; q² = p − λn,&nbsp;&nbsp; λ ~ U(0, 0.003)</span><span class="tag">§ normal alignment</span></div>
+  <p>and require that the field's gradient agrees with <span class="m">+n</span> at <span class="m">q¹</span> and with <span class="m">−n</span> at <span class="m">q²</span> — which is exactly what a distance field does, since it increases away from the surface on both sides. That is the <span class="m">(−1)ᵏ</span> in their Eq. 3. Flip the PCA normal and the two samples swap roles, leaving the loss unchanged: orientation-invariance by construction, so unoriented normals are enough.</p>
+
+  <h3>Fix 3 — switch the Eikonal constraint off near the surface</h3>
+  <p><span class="m">‖∇f‖ = 1</span> holds for a UDF away from the surface, but near it the gradient genuinely shrinks and turns, so imposing it there drags the surface off the data. DEUDF weights the term by a gate that depends on the field value:</p>
+  <div class="eq"><span class="body">δ(d) = ( 1 + (d/ξ)⁴ )⁻¹,&nbsp;&nbsp; L<sub>eik</sub> = mean δ(f(x)) · | ‖∇f(x)‖ − 1 |</span><span class="tag">Eq. 4</span></div>
+  <p>Note the direction: <span class="m">δ</span> is 1 at <span class="m">d = 0</span> and decays as <span class="m">|d|</span> grows, so as written the weight emphasises near-surface points. The paper's stated intent is the opposite — reduce the contribution near the target surface. Plot the function yourself before you trust either reading, decide which polarity actually trains, and <strong>write down in your report which convention you used.</strong> Noticing an ambiguity like this and resolving it empirically is exactly the behaviour a supervisor wants to see. <span class="m">ξ</span> anneals 0.01 → 0.002 alongside the learning rate.</p>
+
+  <h3>Getting a mesh out of a UDF</h3>
+  <p>No sign change, so no plain marching cubes. DEUDF uses <strong>DCUDF</strong> (Hou et al. 2023): march at a small positive iso-value to get a <em>double cover</em> — a closed shell wrapping the surface with a sheet on each side — then optimise that shell inward onto the minimal-distance surface. DCUDF is a separate paper's worth of machinery.</p>
+  <div class="note">
+    <p class="lbl">Scope call for three days</p>
+    <p>Implement the double cover (marching cubes at iso ≈ 0.005) and stop there. Say plainly in your report that the shrinking step is not implemented, and that DEUDF's Chamfer distance is therefore inflated <strong>for that reason alone</strong>, not because the field is wrong. Visually a double cover looks like a slightly puffy version of the right surface — recognisable, which is what matters for the reply.</p>
+  </div>
+
+  <h4>Their settings</h4>
+  <p>5-layer SIREN × 256, <span class="m">ω₀ = 60</span> (30 for noisy input). Weights <span class="m">λ₁…λ₄ = 400, 50, 40, 10</span> on dist / positive / normal / eikonal. Adam 5·10⁻⁵ with cosine annealing to zero. ~30 minutes per shape on a V100.</p>
+</section>
+
+<hr class="rule">
+
+<section id="mpf">
+  <h2><span class="num">Paper 3 · ICML 2026</span>MPF — stop asking one function to do two jobs</h2>
+
+  <p><strong>Metric–Phase Fields: Decoupling Distance and Sign for Thin-Structure Reconstruction from Unoriented Point Clouds.</strong> Kong, Chen, Zong, Hou, Hou, Wang, He. This is your supervisor's own paper — it is the one to get right.</p>
+
+  <h3>The diagnosis</h3>
+  <p>An SDF asks a single scalar function to simultaneously (i) report the distance to the surface and (ii) carry a globally consistent sign. On a watertight blob those two demands are compatible. On a thin sheet, an open boundary, or a non-manifold junction where three faces meet an edge, the sign is genuinely ill-defined — and forcing one function to satisfy an ill-defined constraint makes the optimisation ill-conditioned. The symptoms are specific: inflated thickness, sealed-up sheets, two nearby layers merged into one. A UDF dodges all of that by dropping the sign, and pays for it at extraction time with a cusp at the zero set and no sign change to march on.</p>
+
+  <h3>The move</h3>
+  <p>Learn two fields with one shared backbone, each responsible for one job:</p>
+  <div class="eq"><span class="body">r(x) = softplus( g<sub>r</sub>(x) ) ≥ 0&nbsp;&nbsp;&nbsp;&nbsp;metric — UDF-like, distance only</span><span class="tag">Eq. 16</span></div>
+  <div class="eq"><span class="body">θ(x) ∈ ℝ&nbsp;&nbsp;&nbsp;&nbsp;phase — carries sign where sign is meaningful</span><span class="tag">Eq. 17</span></div>
+  <p>From the phase, a bounded soft sign indicator, with <span class="m">β</span> a <strong>learnable</strong> scalar so the network chooses how sharp the inside/outside transition should be for this particular shape:</p>
+  <div class="eq"><span class="body">P(x) = tanh( β · θ(x) ) ∈ (−1, 1)</span><span class="tag">Eq. 2</span></div>
+  <p>And then the composition that the paper calls a gated-metric formulation with residual phase injection:</p>
+  <div class="eq"><span class="body">φ(x) = r(x) · P(x) + θ(x)</span><span class="tag">Eq. 3 — the one to memorise</span></div>
+
+  <h3>Why that exact formula</h3>
+  <p>Two short propositions justify it, and you should be able to sketch both.</p>
+  <p><strong>Proposition 3.1 — sign consistency.</strong> Since <span class="m">r ≥ 0</span> and <span class="m">β &gt; 0</span>, <span class="m">P</span> has the same sign as <span class="m">θ</span>, so <span class="m">rP</span> does too, so <span class="m">φ = rP + θ</span> can never flip sign relative to <span class="m">θ</span>. Therefore <span class="m">sign(φ) = sign(θ)</span> and <span class="m">φ = 0 ⟺ θ = 0</span>. <strong>The phase field alone decides where the surface is; the metric field cannot move it</strong>, only shape <span class="m">φ</span> away from the interface.</p>
+  <p><strong>Proposition 3.2 — gradient agreement.</strong> At a training point where the losses have driven <span class="m">r(p) = 0</span> and <span class="m">φ(p) = 0</span>, differentiating Eq. 3 leaves <span class="m">∇φ(p) = ∇θ(p)</span>. So the composite's normal at the surface is the phase field's normal — smooth and well-defined, unlike a UDF's cusp. The additive <span class="m">+θ</span> residual is what keeps a live gradient path to <span class="m">θ</span> even where the gated term goes inactive; without it, optimisation near the interface degenerates.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 300" role="img" aria-label="Field value along a probe crossing a thin sheet: a UDF touches zero without changing sign, an SDF is forced into an inflated double crossing, and MPF crosses zero cleanly once on each face of the sheet.">
+      <g font-family="JetBrains Mono, monospace" font-size="10.5">
+        <!-- panel 1 UDF -->
+        <g transform="translate(24,30)">
+          <text x="0" y="-10" fill="currentColor" opacity="0.8" font-size="12">UDF</text>
+          <rect x="0" y="0" width="200" height="170" rx="5" fill="none" stroke="currentColor" opacity="0.18"/>
+          <line x1="12" y1="120" x2="188" y2="120" stroke="currentColor" opacity="0.45"/>
+          <text x="192" y="124" fill="currentColor" opacity="0.45">0</text>
+          <rect x="92" y="16" width="16" height="140" fill="currentColor" opacity="0.08"/>
+          <line x1="100" y1="16" x2="100" y2="156" stroke="currentColor" stroke-dasharray="3 3" opacity="0.4"/>
+          <polyline points="12,30 100,120 188,30" fill="none" stroke="var(--accent)" stroke-width="2.4"/>
+          <text x="12" y="164" fill="currentColor" opacity="0.6">touches 0, never crosses</text>
+        </g>
+        <!-- panel 2 SDF -->
+        <g transform="translate(254,30)">
+          <text x="0" y="-10" fill="currentColor" opacity="0.8" font-size="12">SDF</text>
+          <rect x="0" y="0" width="200" height="170" rx="5" fill="none" stroke="currentColor" opacity="0.18"/>
+          <line x1="12" y1="120" x2="188" y2="120" stroke="currentColor" opacity="0.45"/>
+          <text x="192" y="124" fill="currentColor" opacity="0.45">0</text>
+          <rect x="92" y="16" width="16" height="140" fill="currentColor" opacity="0.08"/>
+          <line x1="100" y1="16" x2="100" y2="156" stroke="currentColor" stroke-dasharray="3 3" opacity="0.4"/>
+          <polyline points="12,34 62,104 70,120 76,136 100,152 124,136 130,120 138,104 188,34" fill="none" stroke="var(--neg)" stroke-width="2.4"/>
+          <text x="12" y="164" fill="currentColor" opacity="0.6">crossings pushed apart — inflated</text>
+        </g>
+        <!-- panel 3 MPF -->
+        <g transform="translate(484,30)">
+          <text x="0" y="-10" fill="var(--accent)" opacity="1" font-size="12">MPF · φ</text>
+          <rect x="0" y="0" width="212" height="170" rx="5" fill="none" stroke="currentColor" opacity="0.18"/>
+          <line x1="12" y1="120" x2="200" y2="120" stroke="currentColor" opacity="0.45"/>
+          <text x="203" y="124" fill="currentColor" opacity="0.45">0</text>
+          <rect x="98" y="16" width="16" height="140" fill="currentColor" opacity="0.08"/>
+          <line x1="106" y1="16" x2="106" y2="156" stroke="currentColor" stroke-dasharray="3 3" opacity="0.4"/>
+          <polyline points="12,34 96,120 106,146 116,120 200,34" fill="none" stroke="var(--accent)" stroke-width="2.4"/>
+          <circle cx="96" cy="120" r="3.5" fill="var(--accent)"/>
+          <circle cx="116" cy="120" r="3.5" fill="var(--accent)"/>
+          <text x="12" y="164" fill="currentColor" opacity="0.6">two clean zero crossings</text>
+        </g>
+      </g>
+      <text x="24" y="284" font-family="JetBrains Mono, monospace" font-size="10" fill="currentColor" opacity="0.5">probe travels left to right across a thin sheet (shaded band)&nbsp;&nbsp;·&nbsp;&nbsp;vertical axis: field value</text>
+    </svg>
+    <figcaption>The claim, in one picture. Across a thin sheet the UDF bottoms out at zero without changing sign, so marching cubes has nothing to bracket. A single SDF must invent a sign for a sheet that has no interior, and resolves the conflict by separating its two crossings — the sheet comes out thickened. MPF's composite field crosses zero twice, close together, forming a narrow two-sided shell that standard marching cubes handles directly.</figcaption>
+  </figure>
+
+  <h3>The seven loss terms, and what each one prevents</h3>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Term</th><th>Where</th><th>What breaks without it</th></tr></thead>
+    <tbody>
+      <tr><td><code>L_zero</code> = mean(r + |φ|)</td><td>input points</td><td>Surface leaves the data. The <span class="m">r</span> half specifically prevents “metric drift” — if <span class="m">r(p) ≠ 0</span>, Prop. 3.2 fails and your normals degrade.</td></tr>
+      <tr><td><code>L_eik^r</code></td><td>band <span class="m">0 &lt; r &lt; δ</span></td><td><span class="m">r</span> stops being a distance. Excluded <em>on</em> the surface to dodge the cusp, and far away to dodge the medial axis.</td></tr>
+      <tr><td><code>L_eik^φ</code></td><td>input points</td><td>Unit-gradient conditioning at the interface; also pins <span class="m">θ</span> before Prop. 3.2 holds.</td></tr>
+      <tr><td><code>L_align</code></td><td>near-surface band</td><td>The phase transition happens at an angle to the surface instead of across it. Uses <span class="m">|⟨n<sub>r</sub>, n<sub>θ</sub>⟩|</span> — the absolute value is the unoriented-input concession. Switched on only after 3000 iterations.</td></tr>
+      <tr><td><code>L_lap</code> = mean |Δφ|</td><td>ambient</td><td>Field oscillates between the data points. Applied to the composite, on ambient samples, so it does not smooth thin structures.</td></tr>
+      <tr><td><code>L_phase</code></td><td>far field</td><td><span class="m">P</span> hovers near 0 in free space and the transition band thickens.</td></tr>
+      <tr><td><code>L_far</code></td><td>far field</td><td>Spurious sheets far from the data. Fires only when <em>both</em> <span class="m">r</span> and <span class="m">|φ|</span> are near zero — the exact signature of a ghost.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note warn">
+    <p class="lbl">A discrepancy worth raising</p>
+    <p>§5 names six weights — <span class="m">λ<sub>align</sub>, λ<sub>eik-r</sub>, λ<sub>eik-φ</sub>, λ<sub>lap</sub>, λ<sub>phase</sub>, λ<sub>far</sub></span> — and then lists five values: (0.7, 0.007, 0.0004, 0.002, 0.1). One value is missing from the published text. Bring this up. It costs him one sentence to answer and it demonstrates that you read the paper rather than skimmed it.</p>
+  </div>
+
+  <h3>The payoff</h3>
+  <p>Because <span class="m">φ</span> is genuinely signed, you extract with <strong>plain marching cubes at level 0</strong> — no DCUDF, no double-cover post-processing. Around a thin sheet, <span class="m">φ</span> takes opposite signs on the two faces separated by a small gap, so it still crosses zero and the sheet survives. That is the sentence to lead with: MPF keeps UDF's robustness on thin structures and SDF's clean extraction, and the decoupling is what buys both.</p>
+</section>
+
+<hr class="rule">
+
+<section id="build">
+  <h2><span class="num">Part 4</span>What you actually have to build</h2>
+
+  <p>One shared pipeline, three loss functions. Sharing the network, the samplers, the extraction and the metrics means every difference you observe is attributable to the method and not to the plumbing — which is the only way a comparison means anything.</p>
+
+  <pre><code>ureca3d/
+  common/diffops.py    gradient · hessian · det3x3 · laplacian     ← start here
+  common/siren.py      SIREN MLP + MPF's two-head network          (done)
+  common/sampling.py   Q_far · Q_near · MPF band · DEUDF pairs     (done)
+  common/extract.py    marching cubes + component filtering        (done)
+  common/metrics.py    Chamfer · F-score · normal consistency      (done)
+  methods/nsh.py       tau schedule + 4 loss terms                 ← you
+  methods/deudf.py     xi schedule + 5 loss terms                  ← you
+  methods/mpf.py       compose() + 7 loss terms                    ← you
+  train.py             one driver, --method {nsh,deudf,mpf}        (done)
+  tests/test_math.py   property tests for everything you write     (done)</code></pre>
+
+  <p>The four functions in <code>diffops.py</code> are the foundation — nothing runs until they do. The Hessian is the interesting one: it is the Jacobian of the gradient, so you compute the gradient with <code>create_graph=True</code> and then differentiate each of its three components again. Three extra backward passes per step, which is why NSH is the slowest of the three to train.</p>
+
+  <h3>The experiment matrix</h3>
+  <p>Four synthetic shapes, chosen so that each one separates the methods rather than flattering them:</p>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Shape</th><th>Why</th><th>Expected outcome</th></tr></thead>
+    <tbody>
+      <tr><td><code>sphere</code></td><td>sanity</td><td>All three work. If not, the bug is not subtle.</td></tr>
+      <tr><td><code>torus</code></td><td>watertight, non-trivial topology</td><td>NSH strongest. Count floating components with and without the Hessian term.</td></tr>
+      <tr><td><code>thin_plate</code></td><td>open sheet, zero thickness</td><td>NSH should visibly fail — seal it or inflate it. DEUDF and MPF should not.</td></tr>
+      <tr><td><code>cube_sheet</code></td><td>MPF's own Fig. 3 toy</td><td><strong>The money figure.</strong> Watertight cube plus a non-manifold thin sheet. Reproduce this one and you have reproduced MPF's central claim.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Plus two variations that cost one flag each: <code>--points 1000</code> for NSH's sparse-input claim, and <code>--noise 0.0025</code> for DEUDF's noise table.</p>
+
+  <h3>Ablations — the cheapest credibility you can buy</h3>
+  <p>An ablation is the same run with one thing switched off. It proves you understand which part does the work, and each one is a single command:</p>
+  <ul>
+    <li>NSH with <span class="m">λ<sub>singularH</sub> = 0</span> → ghost components should reappear. Report the component count, it is a number you can put in the table.</li>
+    <li>NSH with <span class="m">τ</span> frozen at 1 instead of annealed → over-smoothed, detail lost.</li>
+    <li>DEUDF with <span class="m">|·|</span> or softplus bolted onto the output → reproduces the W and the flat U from the diagram above.</li>
+    <li>MPF with <span class="m">L<sub>align</sub> = 0</span>, and MPF extracting from <span class="m">r</span> alone versus from <span class="m">φ</span> → shows what the phase field is buying.</li>
+  </ul>
+</section>
+
+<hr class="rule">
+
+<section id="plan">
+  <h2><span class="num">Part 5</span>Three days, three to four hours each</h2>
+  <p>Ordered by dependency, not by paper. Day 1 buys you the infrastructure that Days 2 and 3 both spend.</p>
+
+  <div class="days">
+    <div class="day">
+      <div class="hd"><span class="d">Day 1</span><span class="t">Differential operators, then NSH</span><span class="hrs">3–4 h</span></div>
+      <ol>
+        <li><strong>Read Part 0 above, then skim NSH §3–4.</strong><span class="hint">45 min. You do not need §5 yet.</span></li>
+        <li><strong>Implement <code>common/diffops.py</code> — all four functions.</strong><span class="hint">45 min. Run <code>pytest tests -q -k "gradient or hessian or det or laplacian"</code> until green. The test that a true SDF has <span class="m">det H ≈ 0</span> is the one that proves you got it right.</span></li>
+        <li><strong>Implement the four NSH losses plus <code>tau_schedule</code>.</strong><span class="hint">60 min. Full test suite for NSH green before you train anything.</span></li>
+        <li><strong>Smoke test, then the real run.</strong><span class="hint">30 min hands-on. <code>--shape sphere --iters 2000 --res 96</code> first; if a sphere comes out, launch torus at 10K iterations and let it run while you stop for the day.</span></li>
+      </ol>
+    </div>
+
+    <div class="day">
+      <div class="hd"><span class="d">Day 2</span><span class="t">DEUDF, and the first honest figure</span><span class="hrs">3–4 h</span></div>
+      <ol>
+        <li><strong>Check yesterday's torus. Launch NSH on <code>thin_plate</code> and <code>cube_sheet</code> immediately</strong> — you want the failure cases, and they train while you work.<span class="hint">15 min.</span></li>
+        <li><strong>Read DEUDF's Method section, implement its five losses.</strong><span class="hint">90 min. Budget most of it for <code>loss_normal</code> and the attenuation polarity question.</span></li>
+        <li><strong>Train DEUDF on <code>thin_plate</code> and <code>cube_sheet</code>.</strong><span class="hint">While it runs, write the double-cover limitation paragraph for your report. Do not leave this to the last hour.</span></li>
+        <li><strong>Build the first comparison figure</strong> — NSH vs DEUDF on the same shape, side by side.<span class="hint">30 min. Seeing it early tells you whether anything is quietly broken.</span></li>
+      </ol>
+    </div>
+
+    <div class="day">
+      <div class="hd"><span class="d">Day 3</span><span class="t">MPF, then write it up</span><span class="hrs">3–4 h</span></div>
+      <ol>
+        <li><strong><code>compose()</code> and the three core MPF losses</strong> — zero, eik_φ, lap — and get <em>something</em> training.<span class="hint">60 min. A partial MPF that runs beats a complete one that does not.</span></li>
+        <li><strong>Add align, phase, far, eik_r. Launch <code>cube_sheet</code>.</strong><span class="hint">60 min. This is the run that matters most; start it as early as you can.</span></li>
+        <li><strong>Assemble the gallery and the results table.</strong><span class="hint">45 min. Notebook cells 7–8 do both.</span></li>
+        <li><strong>Write one page and send it.</strong><span class="hint">45 min. Structure in Part 7.</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="note">
+    <p class="lbl">If you fall behind</p>
+    <p>Protect the <code>cube_sheet</code> run on Day 3 above everything else — it is the figure that speaks to his own paper. Drop the noise experiment first, then the sparse-input one, then DEUDF's <code>thin_plate</code>. Never drop the write-up: results he cannot interpret are worth less than fewer results he can.</p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section id="traps">
+  <h2><span class="num">Part 6</span>Traps, in the order you will hit them</h2>
+  <ul>
+    <li><strong>Forgetting <code>create_graph=True</code>.</strong> Your gradient works, the Hessian silently returns garbage or throws, and no gradient reaches the network from any derivative-based term. The first thing to check when a loss refuses to move.</li>
+    <li><strong>Evaluating a loss on the wrong point set.</strong> The single biggest quality difference between a faithful reimplementation and a poor one. <span class="m">det H = 0</span> belongs on near-surface samples only; the relaxed Eikonal belongs on input points only; MPF has four distinct sets. Re-read the table before you trust a bad result.</li>
+    <li><strong><code>exp()</code> overflow.</strong> <span class="m">exp(−100f)</span> with <span class="m">f</span> strongly negative is <code>inf</code>, then <code>NaN</code>, then a dead run. Clamp the exponent at ~20 and note that you did.</li>
+    <li><strong>Reaching for ground-truth oriented normals.</strong> Easy to do by accident since the loader has them. All three methods must work from unoriented input; using the orientation is changing the problem.</li>
+    <li><strong>Marching cubes at level 0 on a UDF</strong> returns nothing, and it looks like your training failed. It did not — see Part 2.</li>
+    <li><strong>Comparing your Chamfer numbers to the published tables.</strong> Different shapes, different point counts, no DCUDF. Compare methods <em>to each other on your own shapes</em>, and say so explicitly.</li>
+    <li><strong>Reporting a mean over a batch as if it were the paper's sum.</strong> Means are the sane choice — they make the weights independent of batch size — but that shifts the effective weights, so state the convention.</li>
+    <li><strong>Leaving the write-up to the last hour.</strong> The most common way a good three days produces a weak deliverable.</li>
+  </ul>
+</section>
+
+<hr class="rule">
+
+<section id="reply">
+  <h2><span class="num">Part 7</span>What to send back</h2>
+
+  <p>One page, four figures, one table. Keep it short — he will ask for detail if he wants it, and volunteering limitations is what makes the rest of the claims credible.</p>
+
+  <ol>
+    <li><strong>What I implemented.</strong> Name the loss terms per paper and say which ones you completed. Be specific about anything you left out.</li>
+    <li><strong>Setup.</strong> Synthetic shapes, point counts, iterations, hardware. One short paragraph.</li>
+    <li><strong>Results.</strong> The gallery image plus the metrics table.</li>
+    <li><strong>What worked, what did not.</strong> Including the DCUDF gap and any term you could not get to converge.</li>
+    <li><strong>Two questions.</strong> The missing MPF weight, and the DEUDF attenuation polarity. Questions of that kind are evidence you read closely.</li>
+  </ol>
+
+  <div class="draft">
+    <p class="hdr">Draft reply — adjust to what you actually got</p>
+    <p>Dear Prof. He,</p>
+    <p>I have reimplemented the core losses of all three papers on a shared pipeline (SIREN backbone, matched samplers and metrics) so the comparison is like-for-like. Attached are reconstructions on four test shapes, including the cube-with-thin-sheet configuration from Figure 3 of the MPF paper.</p>
+    <p>Briefly: NSH reconstructs the watertight shapes cleanly and the singular-Hessian term visibly removes floating components — with it disabled I get N spurious components, with it enabled M. As expected it cannot handle the open sheet. DEUDF represents the sheet, but I extract only the double cover; I did not implement the DCUDF shrinking step, so its Chamfer distance is inflated for that reason rather than because of the field itself. MPF gives the cleanest result on the cube-plus-sheet case, extracting directly from φ at level 0.</p>
+    <p>Two things I could not resolve from the papers. In MPF §5 the six loss weights are listed with five values, so I assumed λ_far = 0.1. And DEUDF's attenuation δ(d) = (1+(d/ξ)⁴)⁻¹ is largest at d = 0, which appears to emphasise the near-surface region rather than reduce it as the text describes — I tried both polarities and used [whichever]. I would be grateful for a steer on both.</p>
+    <p>Code and full logs are on GitHub at [link]. Happy to walk through any of it.</p>
+    <p>Best regards,<br>Bhavya</p>
+  </div>
+
+  <p style="margin-top:26px; color:var(--ink-2)">One last thing. If you use the reference implementations in <code>solutions/</code> for any term, say which ones. “I implemented six of the seven MPF terms and took the seventh from my reference notes” is a completely normal thing for a second-year to report, and it is the sort of accuracy that makes everything else you say believable.</p>
+</section>
+
+</main>
+</div>
