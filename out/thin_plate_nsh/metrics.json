@@ -1,0 +1,14 @@
+{
+  "chamfer_l1_x1e3": 64.61592252366931,
+  "f_score": 4.395410803449841,
+  "precision": 4.19,
+  "recall": 4.622,
+  "normal_consistency": 86.60693741503407,
+  "shape": "thin_plate",
+  "method": "nsh",
+  "n_components": 247,
+  "sec": 675.6,
+  "iters": 2000,
+  "points": 6000,
+  "level": 0.0
+}
