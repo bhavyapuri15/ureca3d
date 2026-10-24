@@ -7,3 +7,4 @@ out/**/*.ply
 .venv/
 out/**/ckpt.pt
 papers/
+CLAUDE.md

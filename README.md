@@ -49,8 +49,8 @@ Numbers: [RESULTS.md](RESULTS.md) (F-score at 0.005, ground-truth frame, res 256
   - Losses are means, not sums.
 - **MPF — in progress.** Spurious surfaces are fixed by sampling over [−1, 1]³, but
   thin plates still come out as ≈ 0.3-thick slabs instead of thin shells, and the
-  metric branch r stays near zero until `L_align` starts. Open questions for the
-  authors are listed in [CLAUDE.md](CLAUDE.md).
+  metric branch r stays near zero until `L_align` starts. Several questions are
+  open with the MPF authors.
 
 ## Results
 
@@ -206,7 +206,7 @@ still pinned at 1.0 until `L_align` switches on (at 30% of training), then settl
 near 0.7, and r stays small away from the data rather than growing like a distance.
 By Proposition 3.1 the surface is θ's zero set, so this does not move the surface,
 but the metric branch is not yet doing what the paper describes. How the reference
-code keeps r alive is an open question for the authors (CLAUDE.md). Watch `eik_r` in
+code keeps r alive is an open question for the authors. Watch `eik_r` in
 the training log: pinned at 1.0 means the metric branch is dead.
 
 **MPF samples free space in [−1, 1]³ — a deviation from Sec. 5.** The paper
