@@ -1,0 +1,33 @@
+[thin_plate_deudf] device=mps  iters=3000  batch=4096
+  it      0  dist=0.02746 positive=23.05 normal=2.003 eikonal=1.74 xi=0.01 total=1261
+  it    500  dist=0.00667 positive=0.01559 normal=0.8572 eikonal=0.6454 xi=0.01 total=44.19
+  it   1000  dist=0.00387 positive=0.0112 normal=0.6244 eikonal=0.5511 xi=0.01 total=32.6
+  it   1500  dist=0.003427 positive=0.0106 normal=0.5558 eikonal=0.5561 xi=0.009462 total=29.69
+  it   2000  dist=0.002116 positive=0.008748 normal=0.3527 eikonal=0.5201 xi=0.00669 total=20.59
+  it   2500  dist=0.000652 positive=0.009537 normal=0.1379 eikonal=0.4995 xi=0.003424 total=11.25
+  it   2999  dist=0.0001044 positive=0.01055 normal=0.02732 eikonal=0.5314 xi=0.002 total=6.977
+  [extract] data level = 0.00589  (f at input points: min -0.00085 median 0.00001 max 0.00074; 100.0% below the level)
+{
+  "chamfer_l1_x1e3": 2.913023632767172,
+  "f_score": 98.00386314994849,
+  "precision": 96.521,
+  "recall": 99.533,
+  "normal_consistency": 98.59982029732615,
+  "metric_frame": "gt",
+  "f_score_each_bbox": 80.09278731075156,
+  "chamfer_l1_x1e3_each_bbox": 3.6054936226528853,
+  "n_components": 1,
+  "n_kept": 1,
+  "res": 256,
+  "level": 0.005892522285199341,
+  "level_rule": "data",
+  "f_data_min": -0.0008456115610897541,
+  "f_data_median": 1.0169344022870064e-05,
+  "f_data_max": 0.0007372177205979824,
+  "shape": "thin_plate",
+  "method": "deudf",
+  "sec": 120.5,
+  "iters": 3000,
+  "points": 20000,
+  "resumed_from_it": 0
+}

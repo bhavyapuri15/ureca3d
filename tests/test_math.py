@@ -12,6 +12,7 @@ checks that the determinant vanishes.
 import math
 import sys
 
+import numpy as np
 import pytest
 import torch
 
@@ -134,12 +135,13 @@ def test_deudf_positive_is_one_sided():
 def test_deudf_attenuation_gate():
     from methods.deudf import attenuation
     xi = 0.01
-    assert attenuation(torch.tensor([0.0]), xi).item() == pytest.approx(1.0)
-    # NOTE the convention: delta(0)=1 by the formula (1+(d/xi)^4)^-1.
-    # The paper wants the constraint OFF near the surface, so check the shape:
-    near = attenuation(torch.tensor([0.0]), xi).item()
-    far = attenuation(torch.tensor([0.1]), xi).item()
-    assert far < near, "attenuation must decay as |f| grows (that is the formula)"
+    # DEUDF Eq. 4: delta(d) = 1 / (1 + (xi/d)^4) -- Eikonal OFF at the surface,
+    # ON far from it.
+    assert attenuation(torch.tensor([0.0]), xi).item() == pytest.approx(0.0)
+    assert attenuation(torch.tensor([xi]), xi).item() == pytest.approx(0.5)
+    assert attenuation(torch.tensor([-xi]), xi).item() == pytest.approx(0.5)
+    assert attenuation(torch.tensor([0.1]), xi).item() == pytest.approx(1.0, abs=1e-3)
+    assert torch.isfinite(attenuation(torch.tensor([0.0, 1e-12]), xi)).all()
 
 
 def test_deudf_normal_loss_is_orientation_invariant():
@@ -156,6 +158,68 @@ def test_deudf_normal_loss_zero_at_optimum():
     n = torch.nn.functional.normalize(torch.randn(16, 3), dim=-1)
     from methods.deudf import loss_normal
     assert loss_normal(n * 1.0, -n * 1.0, n).item() == pytest.approx(0.0, abs=1e-5)
+
+
+def test_deudf_normal_pairs_loss():
+    """Official-code form: 1 - |cos(grad q1, grad q2)|. Zero for collinear
+    gradients (either direction), one for orthogonal ones."""
+    from methods.deudf import loss_normal_pairs
+    g = torch.randn(16, 3)
+    assert loss_normal_pairs(g, -2.0 * g).item() == pytest.approx(0.0, abs=1e-5)
+    assert loss_normal_pairs(g, 0.5 * g).item() == pytest.approx(0.0, abs=1e-5)
+    e1 = torch.tensor([[1.0, 0.0, 0.0]]); e2 = torch.tensor([[0.0, 1.0, 0.0]])
+    assert loss_normal_pairs(e1, e2).item() == pytest.approx(1.0, abs=1e-5)
+
+
+def test_deudf_schedules_hold_then_cosine():
+    """LR and xi are constant for the first 40% of training, then cosine-annealed
+    (official code; the paper: xi decreases 'following the learning rate')."""
+    from methods.deudf import phase_factor, xi_schedule
+    T = 1001
+    assert phase_factor(0, T) == 1.0 and phase_factor(400, T) == 1.0
+    assert phase_factor(700, T) == pytest.approx(0.5)
+    assert phase_factor(1000, T) == pytest.approx(0.0, abs=1e-12)
+    assert xi_schedule(0, T) == pytest.approx(0.01)
+    assert xi_schedule(400, T) == pytest.approx(0.01)
+    assert xi_schedule(1000, T) == pytest.approx(0.002)
+
+
+def test_deudf_pairs_from_same_points():
+    """q1, q2 straddle the very points of the surface batch, at a distance in
+    (0, lam_max] along the normal."""
+    from common.sampling import Sampler
+    rng = np.random.default_rng(0)
+    P = rng.uniform(-0.5, 0.5, (500, 3)).astype(np.float32)
+    n = rng.normal(size=(500, 3)).astype(np.float32)
+    n /= np.linalg.norm(n, axis=1, keepdims=True)
+    s = Sampler(P, seed=0)
+    ps, idx = s.surface(256)
+    q1, q2, nr = s.normal_pairs(256, n, 0.003, idx=idx)
+    assert np.allclose((q1 + q2) / 2, ps, atol=1e-6)
+    lam = np.linalg.norm(q1 - ps, axis=1)
+    assert (lam > 0).all() and (lam <= 0.003 + 1e-7).all()
+
+
+def test_uniform_bound_covers_the_cube():
+    """bound=1 samples the whole of [-1,1]^3, not the padded point bbox."""
+    from common.sampling import Sampler
+    P = np.random.default_rng(0).uniform(-0.2, 0.2, (500, 3)).astype(np.float32)
+    s = Sampler(P, seed=0)
+    u = s.uniform(20000, bound=1.0)
+    assert u.min() < -0.9 and u.max() > 0.9 and np.abs(u).max() <= 1.0
+    assert np.abs(s.uniform(20000)).max() < 0.31     # default: padded bbox
+
+
+def test_level_from_data_sits_above_the_data():
+    """For a UDF offset by +0.02 everywhere, the level must be 0.02 plus the
+    grid margin -- not relative to the global minimum."""
+    from common.extract import level_from_data
+    fn = lambda x: x[:, 2:3].abs() + 0.02
+    pts = np.random.default_rng(0).uniform(-0.5, 0.5, (100, 3)).astype(np.float32)
+    pts[:, 2] = 0.0
+    level, f = level_from_data(fn, pts, res=129)
+    assert np.allclose(f, 0.02)
+    assert level == pytest.approx(0.02 + 0.75 * 2.0 / 128)
 
 
 # ---------------------------------------------------------------------- MPF
@@ -218,3 +282,48 @@ def test_mpf_far_fires_only_near_zero():
     big = torch.full((8, 1), 0.3)
     assert loss_far(z, z).item() == pytest.approx(1.0)
     assert loss_far(big, big).item() < 1e-10
+
+
+def test_filter_components_keeps_all_large_parts():
+    """Every component with >= 5% of the largest one's faces survives -- not just
+    the largest -- and tiny blobs are dropped."""
+    import trimesh
+    from common.extract import filter_components
+    big = trimesh.creation.icosphere(subdivisions=3)                       # 1280 faces
+    mid = trimesh.creation.icosphere(subdivisions=2); mid.apply_translation([3, 0, 0])  # 320
+    tiny = trimesh.creation.icosphere(subdivisions=0); tiny.apply_translation([6, 0, 0])  # 20
+    mesh, n, kept = filter_components(trimesh.util.concatenate([big, mid, tiny]))
+    assert (n, kept) == (3, 2)
+    assert len(mesh.faces) == len(big.faces) + len(mid.faces)
+
+
+def test_metrics_use_the_ground_truth_frame():
+    """A perfect reconstruction plus a small stray blob far away must still score
+    well: the blob costs some precision, but must not rescale the whole mesh (the
+    old per-mesh bounding-box normalisation shrank everything and F collapsed)."""
+    import trimesh
+    from common.metrics import evaluate
+    gt = trimesh.creation.icosphere(subdivisions=4, radius=0.5)
+    # two independent 100K-point samples of the same surface do not reach 100:
+    # the sample spacing is close to the 0.005 threshold
+    base = evaluate(gt, gt)["f_score"]
+    assert base > 85.0
+    blob = trimesh.creation.icosphere(subdivisions=1, radius=0.02)
+    blob.apply_translation([0.95, 0.0, 0.0])
+    pred = trimesh.util.concatenate([gt, blob])
+    assert evaluate(pred, gt, frame="gt")["f_score"] > base - 3.0
+    assert evaluate(pred, gt, frame="each")["f_score"] < 50.0
+
+
+def test_far_field_respects_bound_and_band():
+    """MPF far-field samples: inside [-bound, bound]^3 when bound is given, and
+    never within delta of the input cloud."""
+    from common.sampling import Sampler
+    from scipy.spatial import cKDTree
+    P = np.random.default_rng(0).uniform(-0.3, 0.3, (2000, 3)).astype(np.float32)
+    P[:, 2] *= 0.1                                    # a flat slab of points
+    s = Sampler(P, seed=0)
+    f = s.far_field(4000, delta=0.05, bound=1.0)
+    assert np.abs(f).max() <= 1.0 and np.abs(f[:, 2]).max() > 0.9
+    assert cKDTree(P).query(f)[0].min() >= 0.05
+    assert np.abs(s.far_field(4000, delta=0.05)[:, 2]).max() < 0.2   # default: padded bbox

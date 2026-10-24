@@ -44,8 +44,13 @@ class Sampler:
         i = self.rng.integers(0, len(self.P), n)
         return self.P[i], i
 
-    def uniform(self, n):
-        """Q_far: uniform in the padded bounding box."""
+    def uniform(self, n, bound=None):
+        """Q_far: uniform in the padded bounding box, or in [-bound, bound]^3 if
+        bound is given (DEUDF's Omega = [-1,1]^3). The padded box can be much
+        smaller than the extraction domain -- e.g. |z| < 0.34 for the torus -- and
+        the field is unconstrained outside it."""
+        if bound is not None:
+            return self.rng.uniform(-bound, bound, (n, 3)).astype(np.float32)
         return self.rng.uniform(self.lo, self.hi, (n, 3)).astype(np.float32)
 
     def near(self, n):
@@ -68,28 +73,32 @@ class Sampler:
         idx = self.rng.integers(0, max(len(keep), 1), n)
         return keep[idx] if len(keep) else self.near(n)
 
-    def far_field(self, n, delta=0.05, oversample=3):
+    def far_field(self, n, delta=0.05, oversample=3, bound=None):
         """Omega \\ N_delta: uniform samples that are NOT near the surface
-        (MPF Eq. 14). Used for the repulsion term that kills spurious sheets."""
-        cand = self.uniform(n * oversample)
+        (MPF Eq. 14). Used for the repulsion term that kills spurious sheets.
+        bound: as in uniform() -- None for the padded bbox, else [-bound, bound]^3."""
+        cand = self.uniform(n * oversample, bound)
         d, _ = self.tree.query(cand)
         keep = cand[d >= delta]
         if len(keep) < n:
-            keep = np.concatenate([keep, self.uniform(n)])
+            keep = np.concatenate([keep, self.uniform(n, bound)])
         idx = self.rng.integers(0, len(keep), n)
         return keep[idx]
 
     # ------------------------------------------------------------- DEUDF
-    def normal_pairs(self, n, normals, lam_max=0.003):
-        """Q = {q1 = p + lam*n, q2 = p - lam*n} (DEUDF Eq. 3 text).
+    def normal_pairs(self, n, normals, lam_max=0.003, idx=None):
+        """Q = {q1 = p + lam*n, q2 = p - lam*n}, lam in (0, lam_max] (DEUDF Eq. 3
+        text).
 
         Returns q1, q2, nrm -- each (n,3). These straddle the surface, so the
         field must have the same |gradient direction| at both, but the gradient
         FLIPS sign across the surface for a UDF. That is the (-1)^k in their loss.
+        Pass idx (from surface()) to build the pairs from the same input points,
+        as the official DEUDF code does.
         """
-        i = self.rng.integers(0, len(self.P), n)
+        i = self.rng.integers(0, len(self.P), n) if idx is None else idx
         p, nr = self.P[i], normals[i]
-        lam = self.rng.uniform(0, lam_max, (n, 1)).astype(np.float32)
+        lam = (lam_max * (1.0 - self.rng.uniform(0, 1, (len(i), 1)))).astype(np.float32)
         return (p + lam * nr).astype(np.float32), (p - lam * nr).astype(np.float32), nr
 
     def dist_to_cloud(self, x):

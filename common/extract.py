@@ -33,6 +33,27 @@ def eval_grid(fn, res=192, bound=1.0, chunk=65536, device="cpu"):
     return out.reshape(res, res, res), t
 
 
+@torch.no_grad()
+def level_from_data(fn, points, res, bound=1.0, margin=0.75, device="cpu",
+                    chunk=65536):
+    """UDF iso-level anchored at the field values at the input points.
+
+    The surface is where the data are, so the level must sit above f there --
+    a level taken relative to the global field minimum can end up below f at the
+    data (observed: level 0.0101 against f ~ 0.0206 at the data, which extracted
+    almost nothing). The margin, in grid cells, is what lets Marching Cubes see a
+    closed shell on a finite grid; 0.75 cells matches DCUDF's 0.003 threshold at
+    512^3 in the official DEUDF setup.
+
+    Returns (level, f at the points as a numpy array).
+    """
+    f = np.concatenate([
+        fn(torch.as_tensor(points[i:i + chunk], device=device)).detach().cpu().numpy().reshape(-1)
+        for i in range(0, len(points), chunk)])
+    spacing = 2.0 * bound / (res - 1)
+    return float(np.median(f)) + margin * spacing, f
+
+
 def field_to_mesh(fn, res=192, bound=1.0, level=0.0, device="cpu",
                   needs_grad=False, chunk=65536):
     """Marching cubes on the field. Returns a trimesh (or None if empty).
@@ -69,14 +90,24 @@ def field_to_mesh(fn, res=192, bound=1.0, level=0.0, device="cpu",
     return m
 
 
-def keep_largest_components(mesh, k=1, min_frac=0.05):
-    """Drop tiny floating blobs (ghost geometry). Report how many you dropped --
-    the COUNT is itself a result: NSH's whole pitch is that it removes them."""
+def filter_components(mesh, min_frac=0.05):
+    """Drop tiny floating blobs (ghost geometry): keep every connected component
+    with at least min_frac of the largest one's faces. Report how many there
+    were -- the COUNT is itself a result: NSH's whole pitch is that it removes
+    them.
+
+    Keeping only the single largest component (as an earlier version did) can
+    delete legitimate geometry: a UDF double cover of cube_sheet at res 128 split
+    into the cube and fragments of the sheet, and the sheet was thrown away.
+    Applied identically to every method so the comparison stays fair.
+
+    Returns (mesh, n_components, n_kept).
+    """
     if mesh is None:
-        return None, 0
+        return None, 0, 0
     comps = mesh.split(only_watertight=False)
     if len(comps) <= 1:
-        return mesh, len(comps)
+        return mesh, len(comps), len(comps)
     comps = sorted(comps, key=lambda c: len(c.faces), reverse=True)
-    big = [c for c in comps if len(c.faces) >= min_frac * len(comps[0].faces)][:max(k, 1)]
-    return trimesh.util.concatenate(big), len(comps)
+    big = [c for c in comps if len(c.faces) >= min_frac * len(comps[0].faces)]
+    return trimesh.util.concatenate(big), len(comps), len(big)

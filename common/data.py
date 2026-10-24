@@ -121,7 +121,7 @@ def load_shape(name_or_path, n_points=20000, noise=0.0, seed=0, single_sided=Fal
         mesh = trimesh.load(name_or_path, process=False, force="mesh")
     mesh = normalize_mesh(mesh)
 
-    pts, fid = trimesh.sample.sample_surface(mesh, n_points)
+    pts, fid = trimesh.sample.sample_surface(mesh, n_points, seed=rng)
     nrm = mesh.face_normals[fid]
 
     if single_sided:

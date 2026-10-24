@@ -10,19 +10,29 @@ Protocol (NSH Sec 5.2, matched by the others): normalise everything to
 [-0.5,0.5]^3, sample 100K points from both the reconstructed and the GT mesh,
 F-score threshold 0.005. DEUDF uses 0.005 and 0.0025. Use 0.005 as your headline.
 
-This file is COMPLETE. Use it unmodified so your numbers are comparable to the
-published tables.
+Normalisation frame. The reconstruction and the ground truth live in the same
+coordinate frame, so both are normalised with the GROUND TRUTH's centre and
+scale (frame="gt", the default). An earlier version normalised each mesh by its
+own bounding box (frame="each"): any stray geometry then rescaled and shifted
+the whole reconstruction relative to the ground truth -- e.g. an MPF torus with
+thin sheets reaching the domain edge scored F 9.6 instead of 65.0 -- and a
+double cover could be slid into range by the recentring (DEUDF thin_plate at
+res 128: F 28.1 instead of 1.8). "each" is kept only to compare with old numbers.
 """
 import numpy as np
 import trimesh
 from scipy.spatial import cKDTree
 
 
-def _rescale_unit(mesh):
+def _unit_transform(mesh):
+    """Centre and scale that map `mesh` into [-0.5, 0.5]^3."""
+    c = (mesh.bounds[0] + mesh.bounds[1]) / 2
+    return c, np.abs(mesh.vertices - c).max() * 2.0
+
+
+def _apply(mesh, c, s):
     m = mesh.copy()
-    c = (m.bounds[0] + m.bounds[1]) / 2
-    m.vertices -= c
-    m.vertices /= (np.abs(m.vertices).max() * 2.0)   # -> [-0.5, 0.5]
+    m.vertices = (m.vertices - c) / s
     return m
 
 
@@ -34,14 +44,25 @@ def sample_with_normals(mesh, n=100000, seed=0):
     return np.asarray(pts), mesh.face_normals[fid]
 
 
-def evaluate(pred_mesh, gt_mesh, n=100000, f_thresh=0.005, seed=0,
-             rescale=True):
-    """Returns dict: chamfer_l1_x1e3, f_score, precision, recall, normal_consistency."""
+def evaluate(pred_mesh, gt_mesh, n=100000, f_thresh=0.005, seed=0, frame="gt"):
+    """Returns dict: chamfer_l1_x1e3, f_score, precision, recall, normal_consistency.
+
+    frame: "gt"   -- normalise both meshes with the ground truth's transform
+           "each" -- normalise each mesh by its own bounding box (old behaviour)
+           None   -- use the meshes as given
+    """
     if pred_mesh is None or len(pred_mesh.faces) == 0:
         return {"chamfer_l1_x1e3": float("nan"), "f_score": 0.0,
                 "precision": 0.0, "recall": 0.0, "normal_consistency": float("nan")}
-    A, B = (_rescale_unit(pred_mesh), _rescale_unit(gt_mesh)) if rescale \
-        else (pred_mesh, gt_mesh)
+    if frame == "gt":
+        c, s = _unit_transform(gt_mesh)
+        A, B = _apply(pred_mesh, c, s), _apply(gt_mesh, c, s)
+    elif frame == "each":
+        A, B = _apply(pred_mesh, *_unit_transform(pred_mesh)), _apply(gt_mesh, *_unit_transform(gt_mesh))
+    elif frame is None:
+        A, B = pred_mesh, gt_mesh
+    else:
+        raise ValueError(f"frame must be 'gt', 'each' or None, not {frame!r}")
     pa, na = sample_with_normals(A, n, seed)
     pb, nb = sample_with_normals(B, n, seed + 1)
 

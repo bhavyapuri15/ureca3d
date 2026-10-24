@@ -1,0 +1,59 @@
+# commit 0846712
+# /usr/bin/python3 -u train.py --method nsh --shape thin_plate --iters 10000 --res 256 --out /content/drive/MyDrive/ureca3d_runs/fix-bugs/main --log_every 250 --ckpt_every 1000 --resume
+[thin_plate_nsh] device=cuda  iters=10000  batch=15000
+  it      0  manifold=0.04876 nonmanifold=0.03087 eikonal=0.4882 singularH=65.6 tau=1 total=449.9
+  it    250  manifold=0.002929 nonmanifold=0.03823 eikonal=0.03444 singularH=6.623 tau=1 total=51.79
+  it    500  manifold=0.002067 nonmanifold=0.03351 eikonal=0.02565 singularH=4.833 tau=1 total=40.69
+  it    750  manifold=0.002302 nonmanifold=0.03123 eikonal=0.02636 singularH=5.089 tau=1 total=41.27
+  it   1000  manifold=0.001716 nonmanifold=0.03286 eikonal=0.02522 singularH=4.242 tau=1 total=37.23
+  it   1250  manifold=0.003315 nonmanifold=0.03355 eikonal=0.03327 singularH=6.948 tau=1 total=51.94
+  it   1500  manifold=0.001221 nonmanifold=0.02786 eikonal=0.01828 singularH=3.598 tau=1 total=29.78
+  it   1750  manifold=0.001239 nonmanifold=0.02556 eikonal=0.01705 singularH=3.686 tau=1 total=28.55
+  it   2000  manifold=0.001304 nonmanifold=0.02521 eikonal=0.01471 singularH=3.739 tau=0.9999 total=28.72
+  it   2250  manifold=0.001416 nonmanifold=0.02376 eikonal=0.01202 singularH=4.075 tau=0.8749 total=28.33
+  it   2500  manifold=0.001071 nonmanifold=0.02279 eikonal=0.01396 singularH=4.153 tau=0.75 total=24.99
+  it   2750  manifold=0.00141 nonmanifold=0.02398 eikonal=0.01519 singularH=4.294 tau=0.625 total=27.7
+  it   3000  manifold=0.001113 nonmanifold=0.02097 eikonal=0.01592 singularH=4.999 tau=0.5 total=23.67
+  it   3250  manifold=0.001337 nonmanifold=0.02169 eikonal=0.01615 singularH=7.148 tau=0.375 total=25.86
+  it   3500  manifold=0.001191 nonmanifold=0.02091 eikonal=0.01087 singularH=8.161 tau=0.2501 total=23.46
+  it   3750  manifold=0.001234 nonmanifold=0.01814 eikonal=0.007889 singularH=11.1 tau=0.1251 total=21.3
+  it   4000  manifold=0.002368 nonmanifold=0.01779 eikonal=0.01582 singularH=81.29 tau=0.0003 total=28.07
+  it   4250  manifold=0.0008836 nonmanifold=0.00993 eikonal=0.009473 singularH=754.6 tau=0.0002887 total=12.83
+  it   4500  manifold=0.0009041 nonmanifold=0.01109 eikonal=0.006689 singularH=1167 tau=0.0002775 total=13.64
+  it   4750  manifold=0.0009067 nonmanifold=0.00979 eikonal=0.008256 singularH=1460 tau=0.0002662 total=13.02
+  it   5000  manifold=0.000801 nonmanifold=0.008012 eikonal=0.006917 singularH=1597 tau=0.000255 total=11.17
+  it   5250  manifold=0.0007327 nonmanifold=0.009639 eikonal=0.006231 singularH=1622 tau=0.0002437 total=11.62
+  it   5500  manifold=0.0005968 nonmanifold=0.009203 eikonal=0.006575 singularH=1892 tau=0.0002325 total=10.47
+  it   5750  manifold=0.002757 nonmanifold=0.01273 eikonal=0.06979 singularH=1281 tau=0.0002212 total=30.71
+  it   6000  manifold=0.0007681 nonmanifold=0.01069 eikonal=0.004124 singularH=2350 tau=0.00021 total=12.49
+  it   6250  manifold=0.0008049 nonmanifold=0.008479 eikonal=0.005577 singularH=3039 tau=0.0001987 total=11.6
+  it   6500  manifold=0.0005113 nonmanifold=0.007004 eikonal=0.003007 singularH=2831 tau=0.0001875 total=8.462
+  it   6750  manifold=0.0007213 nonmanifold=0.007887 eikonal=0.003382 singularH=3080 tau=0.0001762 total=10.49
+  it   7000  manifold=0.001113 nonmanifold=0.01196 eikonal=0.009483 singularH=2278 tau=0.000165 total=15.82
+  it   7250  manifold=0.0006713 nonmanifold=0.009801 eikonal=0.003878 singularH=2741 tau=0.0001537 total=11.19
+  it   7500  manifold=0.0008835 nonmanifold=0.007729 eikonal=0.002575 singularH=3619 tau=0.0001425 total=11.47
+  it   7750  manifold=0.002644 nonmanifold=0.01276 eikonal=0.04448 singularH=2738 tau=0.0001312 total=28.74
+  it   8000  manifold=0.0005535 nonmanifold=0.006587 eikonal=0.002487 singularH=4319 tau=0.00012 total=8.469
+  it   8250  manifold=0.000486 nonmanifold=0.007244 eikonal=0.001619 singularH=4629 tau=0.0001087 total=8.332
+  it   8500  manifold=0.0004058 nonmanifold=0.005721 eikonal=0.001448 singularH=5569 tau=9.746e-05 total=6.888
+  it   8750  manifold=0.0004752 nonmanifold=0.005894 eikonal=0.001203 singularH=5414 tau=8.621e-05 total=7.389
+  it   9000  manifold=0.0005359 nonmanifold=0.007601 eikonal=0.002305 singularH=5714 tau=7.496e-05 total=8.856
+  it   9250  manifold=0.0008749 nonmanifold=0.0102 eikonal=0.003164 singularH=5470 tau=6.371e-05 total=12.75
+  it   9500  manifold=0.0005201 nonmanifold=0.006368 eikonal=0.00373 singularH=8464 tau=5.246e-05 total=8.092
+  it   9750  manifold=0.001136 nonmanifold=0.01101 eikonal=0.02576 singularH=6788 tau=4.121e-05 total=16.13
+  it   9999  manifold=0.0006722 nonmanifold=0.005898 eikonal=0.01062 singularH=1.156e+04 tau=3e-05 total=9.122
+{
+  "chamfer_l1_x1e3": 43.409824745776,
+  "f_score": 8.236509629101285,
+  "precision": 7.197000000000001,
+  "recall": 9.626999999999999,
+  "normal_consistency": 87.18557351322443,
+  "shape": "thin_plate",
+  "method": "nsh",
+  "n_components": 1727,
+  "sec": 1891.6,
+  "iters": 10000,
+  "points": 20000,
+  "level": 0.0,
+  "resumed_from_it": 0
+}

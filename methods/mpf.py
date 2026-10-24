@@ -42,14 +42,15 @@ DEFAULTS = dict(
     lam_zero=1.0,
     lam_align=0.7,
     lam_eik_r=0.007,
-    lam_eik_phi=0.0004,
-    lam_lap=0.002,
-    lam_phase=0.1,
+    lam_eik_phi=0.007,
+    lam_lap=0.0004,
+    lam_phase=0.002,
     lam_far=0.1,
     lam_normal=0.15,     # only when PCA normals are reliable, else 0
     alpha_align=10.0,
     alpha_far=100.0,
     delta=0.05,          # near-surface band width
+    uniform_bound=1.0,   # Omega = [-1,1]^3 -- deviates from Sec. 5, see below
     beta_init=50.0,
     lr=1e-4,
     iters=10000,
@@ -58,9 +59,19 @@ DEFAULTS = dict(
     omega_0=30.0,
     sphere_init_iters=400,   # see sphere_init() below; 0 disables
 )
-# Sec. 5 names six loss weights -- lam_align, lam_eik-r, lam_eik-phi, lam_lap,
-# lam_phase, lam_far -- and lists five values: (0.7, 0.007, 0.0004, 0.002, 0.1).
-# One value is missing from the published text; lam_far = 0.1 is assumed here.
+# Sec. 5 lists six loss weights, in this order:
+# (lam_align, lam_eik-r, lam_eik-phi, lam_lap, lam_phase, lam_far)
+#   = (0.7, 0.007, 0.007, 0.0004, 0.002, 0.1).
+# All six are stated in the paper; none is assumed.
+#
+# Deviation from Sec. 5: far-field (L_phase, L_far) and ambient (L_lap) samples
+# are drawn from Omega = [-1,1]^3, the Marching Cubes domain. The paper draws
+# them "uniformly from the bounding box Omega of the input point cloud". For
+# flat shapes that box is a slab (|z| < 0.34 for the torus, padded), the field
+# is unconstrained in the rest of the extraction volume, and spurious zero
+# level sets appear there: torus, 2000 iters -- 35 components with the padded
+# box, 1 with [-1,1]^3 (F 38.7 -> 65.0 in the ground truth's frame).
+# uniform_bound=None restores the paper's box.
 
 
 def sphere_init(net, iters=400, radius=0.5, bound=1.0, lr=1e-3, device="cpu",

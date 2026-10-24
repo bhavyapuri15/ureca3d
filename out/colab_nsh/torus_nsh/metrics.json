@@ -1,0 +1,22 @@
+{
+  "chamfer_l1_x1e3": 100.39554931578986,
+  "f_score": 51.61874897203076,
+  "precision": 38.146,
+  "recall": 79.805,
+  "normal_consistency": 86.95475371835164,
+  "metric_frame": "gt",
+  "f_score_each_bbox": 3.704197204574333,
+  "chamfer_l1_x1e3_each_bbox": 103.02507712706819,
+  "n_components": 16,
+  "n_kept": 9,
+  "res": 256,
+  "level": 0.0,
+  "level_rule": 0.0,
+  "sec": 1871.2,
+  "iters": 10000,
+  "points": 20000,
+  "resumed_from_it": 0,
+  "shape": "torus",
+  "method": "nsh",
+  "reextracted": true
+}

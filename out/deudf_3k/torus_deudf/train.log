@@ -1,0 +1,33 @@
+[torus_deudf] device=mps  iters=3000  batch=4096
+  it      0  dist=0.02692 positive=23.05 normal=1.998 eikonal=1.743 xi=0.01 total=1261
+  it    500  dist=0.007691 positive=0.006685 normal=0.8394 eikonal=0.7379 xi=0.01 total=44.37
+  it   1000  dist=0.005618 positive=0.00817 normal=0.7022 eikonal=0.6514 xi=0.01 total=37.26
+  it   1500  dist=0.004663 positive=0.009832 normal=0.5375 eikonal=0.6347 xi=0.009462 total=30.2
+  it   2000  dist=0.002696 positive=0.01062 normal=0.4023 eikonal=0.5836 xi=0.00669 total=23.54
+  it   2500  dist=0.0006683 positive=0.01217 normal=0.1629 eikonal=0.5299 xi=0.003424 total=12.69
+  it   2999  dist=0.0001942 positive=0.01431 normal=0.07498 eikonal=0.5681 xi=0.002 total=9.473
+  [extract] data level = 0.00592  (f at input points: min -0.00232 median 0.00003 max 0.00318; 100.0% below the level)
+{
+  "chamfer_l1_x1e3": 3.340662894315203,
+  "f_score": 95.59099849358203,
+  "precision": 95.60300000000001,
+  "recall": 95.57900000000001,
+  "normal_consistency": 99.19942902114515,
+  "metric_frame": "gt",
+  "f_score_each_bbox": 93.0910244318914,
+  "chamfer_l1_x1e3_each_bbox": 3.297718720837584,
+  "n_components": 2,
+  "n_kept": 1,
+  "res": 256,
+  "level": 0.005916026538676199,
+  "level_rule": "data",
+  "f_data_min": -0.0023238963913172483,
+  "f_data_median": 3.36735974997282e-05,
+  "f_data_max": 0.003183783497661352,
+  "shape": "torus",
+  "method": "deudf",
+  "sec": 144.3,
+  "iters": 3000,
+  "points": 20000,
+  "resumed_from_it": 0
+}
